@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Project specific: QR Generator ---
+assets/temp/
+*.png
+outputs/
+*.pdf
