@@ -2,7 +2,7 @@ import flet as ft
 import os
 from app.controllers.qr_controller import generate_and_compile
 
-# --- Constants ---
+# --- Constants --- #
 DEPARTMENTS = [
     "HR",
     "PHILHEALTH",
@@ -23,8 +23,9 @@ ASSET_CODES = {
 class HomeView:
     def __init__(self, page: ft.Page):
         self.page = page
+        self.pdf_bytes = None  # store PDF bytes for later writing
         
-        # --- 1. Department Dropdown ---
+        # --- 1. Department Dropdown --- #
         self.department_dropdown = ft.Dropdown(
             label="Department",
             hint_text="Select department",
@@ -33,7 +34,7 @@ class HomeView:
             value="HR",
         )
         
-        # --- 2. Asset Code Dropdown + Number ---
+        # --- 2. Asset Code Dropdown + Number --- #
         self.asset_code_dropdown = ft.Dropdown(
             label="Asset Code",
             hint_text="Select type",
@@ -48,14 +49,14 @@ class HomeView:
             width=120,
         )
         
-        # --- 3. Serial Number ---
+        # --- 3. Serial Number --- #
         self.serial_input = ft.TextField(
             label="Serial Number",
             hint_text="Enter serial number",
             width=280,
         )
         
-        # --- 4. Description ---
+        # --- 4. Description --- #
         self.description_input = ft.TextField(
             label="Description",
             hint_text="e.g., Office Chair, Laptop, etc.",
@@ -65,31 +66,31 @@ class HomeView:
             expand=True,
         )
         
-        # --- Generate Button & Preview ---
+        # --- Generate Button & Preview --- #
         self.generate_btn = ft.ElevatedButton(
             "Generate Asset Label & PDF",
-            icon=ft.Icons.QR_CODE,   # This works on 0.85+
+            icon=ft.Icons.QR_CODE,
             on_click=self.on_generate_click,
             width=280,
             height=45,
         )
         
-        # --- Status & Preview ---
-        self.status_text = ft.Text(size=14, color=ft.Colors.GREY_700)  # Capital C!
+        # --- Status & Preview --- #
+        self.status_text = ft.Text(size=14, color=ft.Colors.GREY_700)
         
         self.qr_preview = ft.Image(
-            src="",                  # Explicit default src
+            src="",
             width=180,
             height=180,
             visible=False,
         )
         
-        # --- File Picker (Modern setup) ---
+        # --- File Picker --- #
         self.file_picker = ft.FilePicker()
         self.file_picker.on_result = self.on_file_picker_result
         self.page.overlay.append(self.file_picker)
 
-        # --- Build Layout ---
+        # --- Build Layout --- #
         row1 = ft.Row(
             [
                 self.department_dropdown,
@@ -124,7 +125,7 @@ class HomeView:
                     content=self.qr_preview,
                     width=200,
                     height=200,
-                    border=ft.border.all(1, ft.Colors.GREY_300),  # Capital C!
+                    border=ft.Border.all(1, ft.Colors.GREY_300),
                     border_radius=10,
                     padding=10,
                 ),
@@ -136,7 +137,7 @@ class HomeView:
         self.content = ft.Column(
             [
                 ft.Text("Asset QR Code Generator", size=24, weight=ft.FontWeight.BOLD),
-                ft.Divider(height=20, color=ft.Colors.TRANSPARENT),  # Capital C!
+                ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                 row1,
                 row2,
                 row3,
@@ -167,28 +168,36 @@ class HomeView:
                 description=self.description_input.value or "No description provided",
             )
 
+            # Store the PDF bytes
+            with open(pdf_path, "rb") as f:
+                self.pdf_bytes = f.read()
+
             self.qr_preview.src = img_path
             self.qr_preview.visible = True
             self.status_text.value = "✅ Asset label generated! Choose where to save..."
+            self.page.update()
 
-            with open(pdf_path, "rb") as f:
-                pdf_bytes = f.read()
-            
+            # Show the save dialog
             self.file_picker.save_file(
                 file_name=f"asset_label_{self.asset_code_dropdown.value}_{self.asset_number_input.value}.pdf",
-                bytes=pdf_bytes,
             )
-
-            self.page.update()
 
         except Exception as ex:
             self.status_text.value = f"❌ Error: {str(ex)}"
             self.page.update()
 
     def on_file_picker_result(self, e: ft.FilePickerResultEvent):
+        """Handle the file picker result: write the bytes to the chosen path."""
         if e.path:
-            self.status_text.value = f"📁 PDF saved at: {e.path}"
+            # User selected a location → write the file
+            try:
+                with open(e.path, "wb") as f:
+                    f.write(self.pdf_bytes)
+                self.status_text.value = f"📁 PDF saved at: {e.path}"
+            except Exception as ex:
+                self.status_text.value = f"❌ Error saving file: {str(ex)}"
         else:
+            # User cancelled → inform that the PDF is already in the outputs folder
             self.status_text.value = "✅ PDF saved locally in the /outputs folder."
         self.page.update()
 
