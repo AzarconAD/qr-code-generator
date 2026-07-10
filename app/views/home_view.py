@@ -159,7 +159,7 @@ class HomeView:
             return
 
         try:
-            pdf_path = generate_and_compile(
+            pdf_path, img_path = generate_and_compile(
                 department=self.department_dropdown.value,
                 asset_code=self.asset_code_dropdown.value,
                 asset_number=self.asset_number_input.value,
@@ -167,7 +167,7 @@ class HomeView:
                 description=self.description_input.value or "No description provided",
             )
 
-            self.qr_preview.src = "assets/temp/temp_qr.png"
+            self.qr_preview.src = img_path
             self.qr_preview.visible = True
             self.status_text.value = "✅ Asset label generated! Choose where to save..."
 

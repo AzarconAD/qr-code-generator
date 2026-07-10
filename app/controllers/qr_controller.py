@@ -8,7 +8,7 @@ def generate_and_compile(
     asset_number: str,
     serial_number: str,
     description: str,
-) -> str:
+) -> tuple:  # returns (pdf_path, img_path)
     if not department or not asset_code or not asset_number:
         raise ValueError("Department, Asset Code, and Asset Number are required.")
 
@@ -21,7 +21,6 @@ def generate_and_compile(
     )
 
     img_path = generate_qr_image(data)
-
     pdf_path = compile_pdf(img_path, data)
 
-    return pdf_path
+    return pdf_path, img_path
