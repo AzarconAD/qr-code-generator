@@ -24,22 +24,28 @@ def compile_pdf(qr_image_path: str, data: QRData) -> str:
     pdf.set_font("Arial", "B", 12)
     pdf.set_fill_color(240, 240, 240)
     pdf.cell(190, 10, txt="ASSET DETAILS", ln=True, align="C", fill=True)
-    
+
     pdf.set_font("Arial", size=11)
     pdf.ln(4)
-    
+
     details = [
         ("Department", data.department),
         ("Asset ID", data.asset_id),
         ("Serial Number", data.serial_number),
         ("Description", data.description),
     ]
-    
+
+    label_width = 50
+    value_width = 140
+
     for label, value in details:
         pdf.set_font("Arial", "B", 11)
-        pdf.cell(50, 10, txt=f"{label}:", border=0)
+        pdf.cell(label_width, 10, txt=f"{label}:", border=0)
         pdf.set_font("Arial", "", 11)
-        pdf.cell(140, 10, txt=value, border=0, ln=True)
+        if label == "Description":
+            pdf.multi_cell(value_width, 10, txt=value, border=0)
+        else:
+            pdf.cell(value_width, 10, txt=value, border=0, ln=True)
 
     pdf.set_y(270)
     pdf.set_font("Arial", "I", 8)
