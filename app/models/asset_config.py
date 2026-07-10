@@ -20,4 +20,4 @@ ASSET_CODE_MAPPING = {
 }
 
 # Get just the codes for dropdown
-ASSET_CODE = list(ASSET_CODE.keys())
+ASSET_CODE = list(ASSET_CODE_MAPPING.keys())

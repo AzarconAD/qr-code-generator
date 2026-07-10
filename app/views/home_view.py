@@ -71,7 +71,7 @@ class HomeView:
         # --- File Picker --- #
         self.file_picker = ft.FilePicker()
         self.file_picker.on_result = self.on_file_picker_result
-        self.page.overlay.append(self.file_picker)
+        self.page.services.append(self.file_picker)
 
         # --- Build Layout --- #
         row1 = ft.Row(
