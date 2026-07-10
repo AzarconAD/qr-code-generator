@@ -13,7 +13,7 @@ DEPARTMENTS = [
 ]
 
 # Asset Code mappings
-ASSET_CODE = {
+ASSET_CODE_MAPPING = {
     "ASST": "Asset",
     "SUPP": "Supply",
     "EQP": "Equipment",

@@ -1,24 +1,7 @@
 import flet as ft
 import os
 from app.controllers.qr_controller import generate_and_compile
-
-# --- Constants --- #
-DEPARTMENTS = [
-    "HR",
-    "PHILHEALTH",
-    "IT",
-    "FINANCE",
-    "ADMIN",
-    "OPERATIONS",
-    "SALES",
-]
-
-ASSET_CODES = {
-    "ASST": "Asset",
-    "SUPP": "Supply",
-    "EQP": "Equipment",
-}
-
+from app.models.asset_config import DEPARTMENTS, ASSET_CODE_MAPPING
 
 class HomeView:
     def __init__(self, page: ft.Page):
@@ -38,7 +21,7 @@ class HomeView:
         self.asset_code_dropdown = ft.Dropdown(
             label="Asset Code",
             hint_text="Select type",
-            options=[ft.dropdown.Option(code, text=name) for code, name in ASSET_CODES.items()],
+            options=[ft.dropdown.Option(code, text=name) for code, name in ASSET_CODE_MAPPING.items()],
             width=150,
             value="ASST",
         )
