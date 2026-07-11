@@ -59,7 +59,7 @@ class HomeView:
                     [
                         ft.Text("Save a copy elsewhere", size=13, weight=ft.FontWeight.W_500),
                         ft.Text(
-                            "Otherwise it's just kept in your label library.",
+                            "Otherwise it's just kept in your library.",
                             size=11,
                             color=ft.Colors.GREY_600,
                         ),
@@ -72,7 +72,7 @@ class HomeView:
 
         # --- Generate button & status --- #
         self.generate_btn = ft.ElevatedButton(
-            "Generate Label",
+            "Generate QR Code",
             icon=ft.Icons.QR_CODE,
             on_click=self.on_generate_click,
             height=45,

@@ -44,7 +44,7 @@ def main(page: ft.Page):
                 ft.View(
                     route="/history",
                     appbar=ft.AppBar(
-                        title=ft.Text("All Generated Labels"),
+                        title=ft.Text("All Generated QR Codes"),
                         leading=ft.IconButton(
                             icon=ft.Icons.ARROW_BACK,
                             on_click=lambda e: page.go("/"),

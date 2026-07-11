@@ -222,5 +222,5 @@ assets/temp/
 *.png
 outputs/
 *.pdf
-data/
+app/data/
 *.db
