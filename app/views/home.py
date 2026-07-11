@@ -1,3 +1,4 @@
+import os
 import flet as ft
 from app.controllers.qr_controller import generate_and_compile
 from app.models.asset_config import DEPARTMENTS, ASSET_CODE_MAPPING
@@ -204,11 +205,16 @@ class HomeView:
                 )
 
                 if chosen_path:
-                    with open(chosen_path, "wb") as f:
-                        f.write(self.label_bytes)
-                    self._set_status(f"📁 Copy saved at: {chosen_path}")
+                        # Force the correct extension regardless of what the user typed/edited
+                        base, ext = os.path.splitext(chosen_path)
+                        if ext.lower() != ".png":
+                            chosen_path = base + ".png"
+
+                        with open(chosen_path, "wb") as f:
+                            f.write(self.label_bytes)
+                        self._set_status(f"📁 Copy saved at: {chosen_path}")
                 else:
-                    self._set_status("✅ Saved to your QR library only.")
+                    self._set_status("✅ Saved to your label library only.")
             else:
                 self._set_status(f"✅ QR generated and saved to your library.")
 
