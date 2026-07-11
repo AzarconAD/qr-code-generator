@@ -26,7 +26,7 @@ def init_db() -> None:
                 serial_number TEXT,
                 description TEXT,
                 qr_image_path TEXT,
-                pdf_path TEXT,
+                label_path TEXT,
                 created_at TEXT NOT NULL
             )
             """
@@ -40,7 +40,7 @@ def insert_label(
     serial_number: str,
     description: str,
     qr_image_path: str,
-    pdf_path: str,
+    label_path: str,
 ) -> int:
     """Insert a new label record and return its id."""
     with _get_connection() as conn:
@@ -48,7 +48,7 @@ def insert_label(
             """
             INSERT INTO labels
                 (department, asset_code, asset_number, serial_number,
-                 description, qr_image_path, pdf_path, created_at)
+                 description, qr_image_path, label_path, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
@@ -58,7 +58,7 @@ def insert_label(
                 serial_number,
                 description,
                 qr_image_path,
-                pdf_path,
+                label_path,
                 datetime.now().isoformat(timespec="seconds"),
             ),
         )

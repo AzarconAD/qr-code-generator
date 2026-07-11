@@ -6,7 +6,7 @@ from app.models.asset_config import DEPARTMENTS, ASSET_CODE_MAPPING
 class HomeView:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.pdf_bytes = None
+        self.label_bytes = None
 
         # --- Form fields --- #
         self.department_dropdown = ft.Dropdown(
@@ -178,7 +178,7 @@ class HomeView:
             return
 
         try:
-            pdf_path, img_path, record_id = generate_and_compile(
+            label_path, img_path, record_id = generate_and_compile(
                 department=self.department_dropdown.value,
                 asset_code=self.asset_code_dropdown.value,
                 asset_number=self.asset_number_input.value,
@@ -186,8 +186,8 @@ class HomeView:
                 description=self.description_input.value or "No description provided",
             )
 
-            with open(pdf_path, "rb") as f:
-                self.pdf_bytes = f.read()
+            with open(label_path, "rb") as f:
+                self.label_bytes = f.read()
 
             self.qr_preview.src = img_path
             self.qr_preview.visible = True
@@ -199,11 +199,13 @@ class HomeView:
 
                 chosen_path = await self.file_picker.save_file(
                     file_name=f"{self.asset_code_dropdown.value}_{self.asset_number_input.value}.png",
+                    file_type=ft.FilePickerFileType.CUSTOM,
+                    allowed_extensions=["png"],
                 )
 
                 if chosen_path:
                     with open(chosen_path, "wb") as f:
-                        f.write(self.pdf_bytes)
+                        f.write(self.label_bytes)
                     self._set_status(f"📁 Copy saved at: {chosen_path}")
                 else:
                     self._set_status("✅ Saved to your QR library only.")
