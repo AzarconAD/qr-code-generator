@@ -1,28 +1,20 @@
 import os
-import time
+from datetime import datetime
 import qrcode
 from qrcode import ERROR_CORRECT_L
 from app.models.qr_data import QRData
 
-TEMP_DIR = "assets/temp"
+TEMP_DIR = "assets/temp_qr"
 os.makedirs(TEMP_DIR, exist_ok=True)
 
+
 def generate_qr_image(data: QRData) -> str:
-    """Generates a QR code image with a unique filename and returns its path."""
+    """Generates a QR code image and saves it with a unique filename.
 
-    # Clean up old temporary PNG files
-    for f in os.listdir(TEMP_DIR):
-        if f.endswith(".png"):
-            try:
-                os.remove(os.path.join(TEMP_DIR, f))
-            except OSError:
-                pass  # ignore if file is locked or already gone
-
-    # Generate a unique filename using a timestamp
-    timestamp = int(time.time() * 1000)  # milliseconds to reduce collision chance
-    filename = f"qr_{timestamp}.png"
-    file_path = os.path.join(TEMP_DIR, filename)
-
+    Each call gets its own file (based on asset id + timestamp) so that
+    older generated images aren't overwritten -- this matters now that
+    every generated label is kept in the history/database view.
+    """
     qr = qrcode.QRCode(
         version=1,
         error_correction=ERROR_CORRECT_L,
@@ -33,6 +25,11 @@ def generate_qr_image(data: QRData) -> str:
     qr.make(fit=True)
 
     img = qr.make_image(fill_color=data.fill_color, back_color=data.bg_color)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_asset_id = data.asset_id.replace("/", "-").replace("\\", "-")
+    filename = f"{safe_asset_id}_{timestamp}.png"
+    file_path = os.path.join(TEMP_DIR, filename)
     img.save(file_path)
 
-    return file_path   # e.g., "assets/temp/qr_1712345678901.png"
+    return file_path
