@@ -14,7 +14,6 @@ class HomeView:
             hint_text="Select department",
             leading_icon=ft.Icons.APARTMENT,
             options=[ft.DropdownOption(d) for d in DEPARTMENTS],
-            value="HR",
             expand=True,
         )
 
@@ -23,7 +22,6 @@ class HomeView:
             hint_text="Type",
             leading_icon=ft.Icons.CATEGORY,
             options=[ft.DropdownOption(code, text=name) for code, name in ASSET_CODE_MAPPING.items()],
-            value="ASST",
             width=170,
         )
 
@@ -38,6 +36,7 @@ class HomeView:
             label="Serial Number",
             hint_text="Enter serial number",
             prefix_icon=ft.Icons.QR_CODE_2,
+            expand=True,
         )
 
         self.description_input = ft.TextField(
@@ -45,8 +44,9 @@ class HomeView:
             hint_text="e.g., Office Chair, Laptop, etc.",
             prefix_icon=ft.Icons.DESCRIPTION,
             multiline=True,
-            min_lines=2,
+            min_lines=1,
             max_lines=4,
+            expand=True,
         )
 
         # --- Optional save toggle --- #
@@ -161,6 +161,11 @@ class HomeView:
             padding=24,
         )
 
+    def _clear_form(self):
+        self.asset_number_input.value = ""
+        self.serial_input.value = ""
+        self.description_input.value = ""
+
     def _set_status(self, message: str):
         self.status_text.value = message
         self.page.update()
@@ -197,7 +202,9 @@ class HomeView:
                 )
             else:
                 self._set_status(f"✅ Label #{record_id} generated and saved to your library.")
-                self.page.update()
+            
+            self._clear_form()
+            self.page.update()
 
         except Exception as ex:
             self._set_status(f"❌ Error: {str(ex)}")

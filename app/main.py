@@ -7,7 +7,7 @@ from app.data.database import init_db
 def main(page: ft.Page):
     page.title = "Asset QR Code Generator"
     page.theme_mode = ft.ThemeMode.LIGHT
-    page.window.width = 840
+    page.window.width = 960
     page.window.height = 640
 
     init_db()
@@ -24,10 +24,13 @@ def main(page: ft.Page):
                 appbar=ft.AppBar(
                     title=ft.Text("Asset QR Code Generator"),
                     actions=[
-                        ft.IconButton(
-                            icon=ft.Icons.HISTORY,
-                            tooltip="View All Labels",
-                            on_click=lambda e: page.go("/history"),
+                        ft.TextButton(
+                            content=ft.Row(
+                                [ft.Icon(ft.Icons.HISTORY), ft.Text("Library")],
+                                spacing=6,
+                                tight=True,
+                            ),
+                            on_click = lambda e: page.go("/history"),
                         ),
                     ],
                 ),
