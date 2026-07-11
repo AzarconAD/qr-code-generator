@@ -1,12 +1,12 @@
 import flet as ft
-from app.views.home_view import HomeView
+from app.views.home import HomeView
 
 def main(page: ft.Page):
     page.title = "QR Code Generator"
     page.theme_mode = ft.ThemeMode.LIGHT
 
-    page.window.width = 650
-    page.window.height = 550
+    page.window.width = 840
+    page.window.height = 580
 
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
