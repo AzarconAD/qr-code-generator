@@ -6,6 +6,7 @@ from app.data.database import init_db
 
 def main(page: ft.Page):
     page.title = "Asset QR Code Generator"
+    page.window.icon = "assets/icons/qr-code.ico"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.window.width = 960
     page.window.height = 640
