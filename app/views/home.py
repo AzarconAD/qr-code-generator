@@ -109,7 +109,6 @@ class HomeView:
 
         # --- File Picker --- #
         self.file_picker = ft.FilePicker()
-        self.file_picker.on_result = self.on_file_picker_result
         self.page.services.append(self.file_picker)
 
         # --- Layout: form card (left) + actions/preview card (right) --- #
@@ -170,8 +169,7 @@ class HomeView:
         self.status_text.value = message
         self.page.update()
 
-    def on_generate_click(self, e):
-        """Validate inputs and generate the label (QR image + PDF + database record)."""
+    async def on_generate_click(self, e):
         if not self.department_dropdown.value:
             self._set_status("⚠️ Please select a Department.")
             return
@@ -196,30 +194,27 @@ class HomeView:
             self.empty_preview.visible = False
 
             if self.save_copy_switch.value:
-                self._set_status("✅ Label generated! Choose where to save a copy...")
-                self.file_picker.save_file(
-                    file_name=f"asset_label_{self.asset_code_dropdown.value}_{self.asset_number_input.value}.pdf",
+                self._set_status("✅ QR generated! Choose where to save a copy...")
+                self.page.update()
+
+                chosen_path = await self.file_picker.save_file(
+                    file_name=f"{self.asset_code_dropdown.value}_{self.asset_number_input.value}.png",
                 )
+
+                if chosen_path:
+                    with open(chosen_path, "wb") as f:
+                        f.write(self.pdf_bytes)
+                    self._set_status(f"📁 Copy saved at: {chosen_path}")
+                else:
+                    self._set_status("✅ Saved to your QR library only.")
             else:
-                self._set_status(f"✅ Label #{record_id} generated and saved to your library.")
-            
+                self._set_status(f"✅ QR generated and saved to your library.")
+
             self._clear_form()
             self.page.update()
 
         except Exception as ex:
             self._set_status(f"❌ Error: {str(ex)}")
-
-    def on_file_picker_result(self, e: ft.FilePickerResultEvent):
-        """Handle the file picker result: write the bytes to the chosen path."""
-        if e.path:
-            try:
-                with open(e.path, "wb") as f:
-                    f.write(self.pdf_bytes)
-                self._set_status(f"📁 Copy saved at: {e.path}")
-            except Exception as ex:
-                self._set_status(f"❌ Error saving file: {str(ex)}")
-        else:
-            self._set_status("✅ Saved to your label library only.")
 
     def get_view(self):
         return self.content
