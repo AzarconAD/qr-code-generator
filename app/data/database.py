@@ -76,3 +76,12 @@ def get_label(label_id: int) -> dict | None:
     with _get_connection() as conn:
         row = conn.execute("SELECT * FROM labels WHERE id = ?", (label_id,)).fetchone()
         return dict(row) if row else None
+    
+def delete_label(label_id: int) -> dict | None:
+    """Delete a label record and return its row (for file cleanup), or None if not found."""
+    with _get_connection() as conn:
+        row = conn.execute("SELECT * FROM labels WHERE id = ?", (label_id,)).fetchone()
+        if row is None:
+            return None
+        conn.execute("DELETE FROM labels WHERE id = ?", (label_id,))
+        return dict(row)

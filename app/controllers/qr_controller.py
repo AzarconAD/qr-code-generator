@@ -3,6 +3,7 @@ from app.models.qr_data import QRData
 from app.utils.qr_generator import generate_qr_image
 from app.utils.label_compiler import compile_label_png
 from app.data.database import insert_label
+from app.data.database import delete_label as _delete_label_record
 
 def generate_and_compile(department, asset_code, asset_number, serial_number, description):
     if not department or not asset_code or not asset_number:
@@ -36,3 +37,15 @@ def generate_and_compile(department, asset_code, asset_number, serial_number, de
         raise
 
     return label_path, img_path, record_id
+
+def delete_qr_code(label_id: int) -> bool:
+    """Delete a QR code's DB record and its associated files. Returns True if a record was found."""
+    record = _delete_label_record(label_id)
+    if record is None:
+        return False
+
+    for path in (record.get("qr_image_path"), record.get("label_path")):
+        if path and os.path.exists(path):
+            os.remove(path)
+
+    return True
