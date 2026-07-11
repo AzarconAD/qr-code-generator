@@ -76,9 +76,14 @@ class HistoryView:
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             alignment=ft.MainAxisAlignment.CENTER,
-            expand=True,
+            tight=True,
         )
-        self.list_container = ft.Container(content=self.empty_state, expand=True)
+
+        self.list_container = ft.Container(
+            content=self.empty_state,
+            expand=True,
+            alignment=ft.Alignment.CENTER,
+        )
         self.status_text = ft.Text(size=12, color=ft.Colors.GREY_700)
 
         self.file_picker = ft.FilePicker()
