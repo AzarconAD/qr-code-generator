@@ -1,10 +1,12 @@
 import os
+from pathlib import Path
 from datetime import datetime
 from fpdf import FPDF
 from app.models.qr_data import QRData
 
-OUTPUT_DIR = "outputs"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent  # app/utils -> app -> project root
+OUTPUT_DIR = PROJECT_ROOT / "outputs"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def compile_pdf(qr_image_path: str, data: QRData) -> str:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

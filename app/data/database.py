@@ -2,7 +2,7 @@ import sqlite3
 import os
 from datetime import datetime
 
-DB_DIR = "app/data"
+DB_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(DB_DIR, "labels.db")
 os.makedirs(DB_DIR, exist_ok=True)
 

@@ -7,7 +7,7 @@ from app.data.database import init_db
 def main(page: ft.Page):
     page.title = "Asset QR Code Generator"
     page.theme_mode = ft.ThemeMode.LIGHT
-    page.window.width = 720
+    page.window.width = 840
     page.window.height = 640
 
     init_db()
@@ -62,6 +62,3 @@ def main(page: ft.Page):
     page.on_view_pop = view_pop
     route_change(None)
     page.update()
-
-
-ft.app(target=main)
