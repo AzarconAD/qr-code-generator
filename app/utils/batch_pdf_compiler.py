@@ -27,6 +27,7 @@ def _chunk(items: list, size: int) -> list[list]:
 
 def _render_page(label_paths: list[str], label_px: int, columns: int) -> Image.Image:
     page = Image.new("RGB", (PAGE_WIDTH_PX, PAGE_HEIGHT_PX), "white")
+    page.info["dpi"] = (DPI, DPI)
 
     for index, path in enumerate(label_paths):
         col = index % columns
@@ -64,7 +65,7 @@ def compile_labels_to_pdf(label_paths: list[str], label_size_in: float = 2.0) ->
 
     first_page, remaining_pages = pages[0], pages[1:]
     first_page.save(
-        pdf_path, "PDF", resolution=DPI,
+        pdf_path, "PDF", dpi=(DPI, DPI),
         save_all=True, append_images=remaining_pages,
     )
 
