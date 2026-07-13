@@ -78,12 +78,7 @@ class HistoryView:
             alignment=ft.MainAxisAlignment.CENTER,
             tight=True,
         )
-
-        self.list_container = ft.Container(
-            content=self.empty_state,
-            expand=True,
-            alignment=ft.Alignment.CENTER,
-        )
+        self.list_container = ft.Container(content=self.empty_state, expand=True, alignment=ft.Alignment.CENTER)
         self.status_text = ft.Text(size=12, color=ft.Colors.GREY_700)
 
         self.file_picker = ft.FilePicker()
@@ -100,7 +95,24 @@ class HistoryView:
             ],
             actions_alignment=ft.MainAxisAlignment.END,
         )
+
+        # --- Enlarged preview dialog --- #
+        self.preview_image = ft.Image(src="", width=320, height=320, fit=ft.BoxFit.CONTAIN)
+        self.preview_details = ft.Column(spacing=4)
+        self.preview_dialog = ft.AlertDialog(
+            modal=False,
+            content=ft.Column(
+                [self.preview_image, self.preview_details],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                tight=True,
+                spacing=12,
+            ),
+            actions=[ft.TextButton("Close", on_click=self._on_close_preview)],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
         self.page.overlay.append(self.confirm_dialog)
+        self.page.overlay.append(self.preview_dialog)
 
         self.container = ft.Column(
             [
@@ -139,11 +151,25 @@ class HistoryView:
 
         preview_path = r.get("label_path") or r["qr_image_path"]
 
+        thumbnail = ft.Container(
+            content=ft.Image(src=preview_path, width=56, height=56, fit=ft.BoxFit.CONTAIN),
+            on_click=lambda e, rec=r: self._open_preview(rec),
+            ink=True,
+            border_radius=6,
+        )
+
+        delete_btn = ft.IconButton(
+            icon=ft.Icons.DELETE_OUTLINE,
+            icon_color=ft.Colors.RED_400,
+            tooltip="Delete this QR code",
+            on_click=lambda e, rid=r["id"]: self._request_delete([rid]),
+        )
+
         return ft.Container(
             content=ft.Row(
                 [
                     checkbox,
-                    ft.Image(src=preview_path, width=56, height=56, fit=ft.BoxFit.CONTAIN),
+                    thumbnail,
                     ft.Column(
                         [
                             ft.Text(asset_id, weight=ft.FontWeight.BOLD, size=15),
@@ -157,12 +183,33 @@ class HistoryView:
                         spacing=2, expand=True,
                     ),
                     ft.Text(created, size=11, color=ft.Colors.GREY_500),
+                    delete_btn,
                 ],
                 spacing=15, vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             padding=12, border=ft.Border.all(1, ft.Colors.GREY_300),
             border_radius=10, bgcolor=ft.Colors.WHITE,
         )
+
+    def _open_preview(self, record: dict):
+        asset_id = f"{record['asset_code']}-{record['asset_number']}"
+        created = record["created_at"].replace("T", "  ") if record["created_at"] else ""
+        preview_path = record.get("label_path") or record["qr_image_path"]
+
+        self.preview_image.src = preview_path
+        self.preview_details.controls = [
+            ft.Text(asset_id, weight=ft.FontWeight.BOLD, size=18),
+            ft.Text(f"Department: {record['department']}", size=13),
+            ft.Text(f"Serial Number: {record['serial_number'] or 'N/A'}", size=13),
+            ft.Text(f"Description: {record['description'] or 'No description'}", size=13),
+            ft.Text(f"Generated: {created}", size=12, color=ft.Colors.GREY_500),
+        ]
+        self.preview_dialog.open = True
+        self.page.update()
+
+    def _on_close_preview(self, e):
+        self.preview_dialog.open = False
+        self.page.update()
 
     def _on_row_check_change(self, record_id: int, checked: bool):
         if checked:
