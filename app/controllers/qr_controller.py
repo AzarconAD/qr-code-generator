@@ -5,16 +5,33 @@ from app.utils.label_compiler import compile_label_png
 from app.data.database import insert_label
 from app.data.database import delete_label as _delete_label_record
 
-def generate_and_compile(department, reference_no, asset_code, asset_number, serial_number, description):
-    if not department or not asset_code or not asset_number or not reference_no:
+
+def generate_and_compile(
+    department: str,
+    reference_no: str,
+    asset_code: str,
+    asset_number: str,
+    serial_number: str,
+    description: str,
+) -> tuple:
+    """
+    Generate a QR label, save it to the database, and return paths + record ID.
+
+    All empty strings for optional fields are defaulted to 'N/A' or 'No description provided'.
+    """
+    reference_no = reference_no.strip() if reference_no else "N/A"
+    serial_number = serial_number.strip() if serial_number else "N/A"
+    description = description.strip() if description else "No description provided"
+
+    if not department or not reference_no or not asset_code or not asset_number:
         raise ValueError("Department, Reference Number, Asset Code, and Asset Number are required.")
 
     data = QRData(
         department=department,
-        reference_no=reference_no, 
-        asset_code=asset_code, 
+        reference_no=reference_no,
+        asset_code=asset_code,
         asset_number=asset_number,
-        serial_number=serial_number, 
+        serial_number=serial_number,
         description=description,
     )
 
@@ -24,12 +41,12 @@ def generate_and_compile(department, reference_no, asset_code, asset_number, ser
     try:
         record_id = insert_label(
             department=department,
-            reference_no=reference_no, 
-            asset_code=asset_code, 
+            reference_no=reference_no,
+            asset_code=asset_code,
             asset_number=asset_number,
-            serial_number=serial_number, 
+            serial_number=serial_number,
             description=description,
-            qr_image_path=img_path, 
+            qr_image_path=img_path,
             label_path=label_path,
         )
     except Exception:

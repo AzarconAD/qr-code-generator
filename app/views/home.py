@@ -220,6 +220,7 @@ class HomeView:
         )
 
     def _clear_form(self):
+        self.reference_no.value = ""
         self.asset_number_input.value = ""
         self.serial_input.value = ""
         self.description_input.value = ""

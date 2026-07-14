@@ -2,9 +2,8 @@ import os
 import pandas as pd
 
 REQUIRED_FIELDS = ["department", "reference_no", "asset_code", "asset_number", "serial_number", "description"]
-DEFAULT_ASSET_CODE = "ASST"  # fallback if no asset_code column is found
+DEFAULT_ASSET_CODE = "ASST"
 
-# Header aliases – map various column names to canonical fields
 HEADER_ALIASES = {
     # Department
     "department": "department",
@@ -20,8 +19,8 @@ HEADER_ALIASES = {
     "ref. number": "reference_no",
     "ref.": "reference_no",
     "ref": "reference_no",
-    # Asset Code (used as asset_number if no separate asset_number column)
-    "asset code": "asset_code_original",  # we'll handle this specially
+    # Asset Code
+    "asset code": "asset_code_original",
     "asset type": "asset_code",
     "assetcode": "asset_code_original",
     # Asset Number
@@ -109,19 +108,12 @@ def parse_import_file(file_path: str) -> list[dict]:
             if canonical == "asset_code_original":
                 asset_code_col = col
 
-    # If we have a column mapped to asset_code_original (i.e., "Asset Code"),
-    # and we don't have an asset_number column, we'll use that column for asset_number.
-    # Also, we'll set asset_code to default.
     if asset_code_col and "asset_number" not in column_map.values():
         # Map that column to asset_number instead
         column_map[asset_code_col] = "asset_number"
 
     # If there is still no asset_number column, we cannot proceed.
     if "asset_number" not in column_map.values():
-        # Maybe the column is named "Asset Number" but not in aliases; we could try to guess
-        # but we'll raise an error or skip.
-        # For robustness, we can try to find a column with numeric-like values.
-        # But we'll keep it simple: if no asset_number, we can't import.
         raise ValueError("No 'Asset Number' or 'Asset Code' column found. Please ensure your file has a column for asset number.")
 
     df = df.rename(columns=column_map)

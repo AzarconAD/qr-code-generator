@@ -5,13 +5,15 @@ from app.controllers.qr_controller import delete_qr_code
 from app.utils.batch_pdf_compiler import compile_labels_to_pdf
 from app.models.asset_config import DEPARTMENTS
 
-SIZE_OPTIONS = ["1", "1.5" "2", "3", "4", "5"]
+SIZE_OPTIONS = ["1", "1.5", "2", "3", "4", "5"]
 
 
 class HistoryView:
     def __init__(self, page: ft.Page):
         self.page = page
         self.records: list[dict] = []
+        self.filtered_records: list[dict] = []
+        self._active_filter: str | None = None 
         self.selected_ids: set[int] = set()
         self.checkboxes: dict[int, ft.Checkbox] = {}
         self.compiled_bytes: bytes | None = None
@@ -137,28 +139,18 @@ class HistoryView:
         )
 
     def refresh(self):
+        """Load all records from DB and re‑apply current filter."""
         self.records = get_all_labels()
-        self.selected_ids.clear()
-        self.checkboxes.clear()
-        self.select_all_checkbox.value = False
-        self._update_selection_status()
-
-        self.list_view.controls.clear()
-        if not self.records:
-            self.list_container.content = self.empty_state
-            return
-
-        for r in self.records:
-            self.list_view.controls.append(self._build_row(r))
-        self.list_container.content = self.list_view
+        self._apply_filter()
 
     def _apply_filter(self):
-        """Filter records by selected department and rebuild the list."""
+        """Filter self.records by department and rebuild the list view."""
         if self._active_filter:
-            self.filtered_records = [r for r in self.records if r["department"] == self._active_filter]
+            self.filtered_records = [r for r in self.records if r.get("department") == self._active_filter]
         else:
             self.filtered_records = list(self.records)
 
+        # Clear selections
         self.selected_ids.clear()
         self.checkboxes.clear()
         self.select_all_checkbox.value = False
@@ -171,17 +163,17 @@ class HistoryView:
             else:
                 self.empty_state.controls[1].value = "No QR codes generated yet."
             self.list_container.content = self.empty_state
-            return
+        else:
+            for r in self.filtered_records:
+                self.list_view.controls.append(self._build_row(r))
+            self.list_container.content = self.list_view
 
-        for r in self.filtered_records:
-            self.list_view.controls.append(self._build_row(r))
-        self.list_container.content = self.list_view
+        self.page.update()
 
     def on_dept_filter_change(self, e):
         selected = self.dept_filter_dropdown.value
         self._active_filter = None if selected == "__all__" else selected
         self._apply_filter()
-        self.page.update()
 
     def _build_row(self, r: dict) -> ft.Control:
         asset_id = f"{r['asset_code']}-{r['asset_number']}"
@@ -240,13 +232,18 @@ class HistoryView:
         created = record["created_at"].replace("T", "  ") if record["created_at"] else ""
         preview_path = record.get("label_path") or record["qr_image_path"]
 
+        # safe access with fallback for missing fields
+        ref_no = record.get("reference_no") or "N/A"
+        serial = record.get("serial_number") or "N/A"
+        desc = record.get("description") or "No description"
+
         self.preview_image.src = preview_path
         self.preview_details.controls = [
             ft.Text(asset_id, weight=ft.FontWeight.BOLD, size=18),
             ft.Text(f"Department: {record['department']}", size=13),
-            ft.Text(f"Reference Number: {record['reference_no']}", size=13),
-            ft.Text(f"Serial Number: {record['serial_number'] or 'N/A'}", size=13),
-            ft.Text(f"Description: {record['description'] or 'No description'}", size=13),
+            ft.Text(f"Reference Number: {ref_no}", size=13),
+            ft.Text(f"Serial Number: {serial}", size=13),
+            ft.Text(f"Description: {desc}", size=13),
             ft.Text(f"Generated: {created}", size=12, color=ft.Colors.GREY_500),
         ]
         self.preview_dialog.open = True
@@ -315,14 +312,15 @@ class HistoryView:
                 deleted_count += 1
 
         self.status_text.value = f"🗑️ Deleted {deleted_count} QR code(s)."
-        self.refresh()
+        self.refresh()  # will re‑apply filter
         self.page.update()
 
     async def on_compile_click(self, e):
         if not self.selected_ids:
             return
 
-        selected_records = [r for r in self.records if r["id"] in self.selected_ids]
+        # Use filtered_records to ensure we only select visible records
+        selected_records = [r for r in self.filtered_records if r["id"] in self.selected_ids]
         label_paths = [r.get("label_path") or r["qr_image_path"] for r in selected_records]
         label_size_in = float(self.size_dropdown.value or "2")
 
