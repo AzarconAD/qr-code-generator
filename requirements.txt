@@ -1,3 +1,5 @@
 flet>=0.85.0
 qrcode[pil]>=7.0
 Pillow>=9.0
+pandas>=2.0.0
+openpyxl>=3.1.0

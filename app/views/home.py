@@ -2,6 +2,7 @@ import os
 import flet as ft
 from app.controllers.qr_controller import generate_and_compile
 from app.models.asset_config import DEPARTMENTS, ASSET_CODE_MAPPING
+from app.utils.import_parser import parse_import_file
 
 
 class HomeView:
@@ -119,11 +120,61 @@ class HomeView:
         self.file_picker = ft.FilePicker()
         self.page.services.append(self.file_picker)
 
+        # --- Import from Excel/CSV --- #
+        self.import_file_picker = ft.FilePicker()
+        self.page.services.append(self.import_file_picker)
+
+        self.imported_rows: list[dict] = []
+        self.import_row_checkboxes: dict[int, ft.Checkbox] = {}
+
+        self.import_btn = ft.OutlinedButton(
+            "Import from Excel/CSV",
+            icon=ft.Icons.UPLOAD_FILE,
+            on_click=self.on_import_click,
+        )
+
+        self.import_select_all = ft.Checkbox(value=True, on_change=self._on_import_select_all_change)
+        self.import_list_view = ft.ListView(spacing=6, height=280)
+        self.import_status = ft.Text(size=12, color=ft.Colors.GREY_700)
+        self.import_generate_btn = ft.ElevatedButton(
+            "Generate Selected",
+            icon=ft.Icons.QR_CODE,
+            on_click=self.on_import_generate_click,
+        )
+
+        self.import_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Import Preview"),
+            content=ft.Column(
+                [
+                    ft.Row([self.import_select_all, ft.Text("Select All", size=13)]),
+                    ft.Divider(height=4),
+                    self.import_list_view,
+                    self.import_status,
+                ],
+                tight=True,
+                spacing=8,
+                width=420,
+            ),
+            actions=[
+                ft.TextButton("Cancel", on_click=self._on_import_cancel),
+                self.import_generate_btn,
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        self.page.overlay.append(self.import_dialog)
+
         # --- Layout: form card (left) + actions/preview card (right) --- #
         form_card = ft.Container(
             content=ft.Column(
                 [
-                    ft.Text("Asset Information", size=15, weight=ft.FontWeight.BOLD),
+                    ft.Row(
+                        [
+                            ft.Text("Asset Information", size=15, weight=ft.FontWeight.BOLD),
+                            ft.Container(expand=True),
+                            self.import_btn,
+                        ],
+                    ),
                     self.department_dropdown,
                     ft.Row([self.asset_code_dropdown, self.asset_number_input], spacing=12),
                     ft.Row([self.reference_no, self.serial_input], spacing=12),
@@ -234,3 +285,140 @@ class HomeView:
 
     def get_view(self):
         return self.content
+    
+    async def on_import_click(self, e):
+        files = await self.import_file_picker.pick_files(
+            dialog_title="Select an Excel or CSV file",
+            file_type=ft.FilePickerFileType.CUSTOM,
+            allowed_extensions=["xlsx", "xls", "csv"],
+            allow_multiple=False,
+        )
+
+        if not files:
+            return
+
+        try:
+            self.imported_rows = parse_import_file(files[0].path)
+        except Exception as ex:
+            self._set_status(f"❌ Import error: {str(ex)}")
+            return
+
+        if not self.imported_rows:
+            self._set_status("⚠️ No rows found in the selected file.")
+            return
+
+        self._build_import_preview()
+        self.import_dialog.open = True
+        self.page.update()
+
+    def _build_import_preview(self):
+        self.import_row_checkboxes.clear()
+        self.import_list_view.controls.clear()
+        self.import_select_all.value = True
+
+        for idx, row in enumerate(self.imported_rows):
+            is_valid = not row["missing_fields"]
+            checkbox = ft.Checkbox(value=is_valid, disabled=not is_valid)
+            self.import_row_checkboxes[idx] = checkbox
+
+            summary = f"{row['department'] or '—'} / {row['asset_code'] or '—'}-{row['asset_number'] or '—'}"
+            desc = row["description"] or "No description"
+
+            if is_valid:
+                detail_color = ft.Colors.GREY_700
+                warning = None
+            else:
+                detail_color = ft.Colors.RED_400
+                warning = ft.Text(
+                    f"Row {row['row_number']}: missing {', '.join(row['missing_fields'])}",
+                    size=11, color=ft.Colors.RED_400,
+                )
+
+            row_controls = [
+                ft.Row(
+                    [
+                        checkbox,
+                        ft.Column(
+                            [
+                                ft.Text(summary, size=13, weight=ft.FontWeight.W_500, color=detail_color),
+                                ft.Text(desc, size=11, color=ft.Colors.GREY_500, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                            ],
+                            spacing=0, expand=True,
+                        ),
+                    ],
+                    spacing=8,
+                ),
+            ]
+            if warning:
+                row_controls.append(warning)
+
+            self.import_list_view.controls.append(
+                ft.Container(
+                    content=ft.Column(row_controls, spacing=2),
+                    padding=8, border=ft.Border.all(1, ft.Colors.GREY_300), border_radius=8,
+                )
+            )
+
+        valid_count = sum(1 for r in self.imported_rows if not r["missing_fields"])
+        invalid_count = len(self.imported_rows) - valid_count
+        self.import_status.value = f"{valid_count} ready, {invalid_count} skipped (missing required fields)"
+
+    def _on_import_select_all_change(self, e):
+        checked = self.import_select_all.value
+        for idx, checkbox in self.import_row_checkboxes.items():
+            if not checkbox.disabled:  # never auto-check invalid rows
+                checkbox.value = checked
+        self.page.update()
+
+    def _on_import_cancel(self, e):
+        self.import_dialog.open = False
+        self.page.update()
+
+    async def on_import_generate_click(self, e):
+        selected_indices = [
+            idx for idx, checkbox in self.import_row_checkboxes.items()
+            if checkbox.value and not checkbox.disabled
+        ]
+
+        if not selected_indices:
+            self.import_status.value = "⚠️ No rows selected."
+            self.page.update()
+            return
+
+        self.import_generate_btn.disabled = True
+        total = len(selected_indices)
+        success_count = 0
+        failed_rows = []
+
+        for position, idx in enumerate(selected_indices, start=1):
+            row = self.imported_rows[idx]
+
+            self.import_status.value = f"⏳ Generating {position} of {total}... ({success_count} succeeded, {len(failed_rows)} failed)"
+            self.page.update()
+
+            try:
+                generate_and_compile(
+                    department=row["department"],
+                    reference_no=row["reference_no"] or "N/A",
+                    asset_code=row["asset_code"],
+                    asset_number=row["asset_number"],
+                    serial_number=row["serial_number"] or "N/A",
+                    description=row["description"] or "No description provided",
+                )
+                success_count += 1
+            except Exception as ex:
+                failed_rows.append((row["row_number"], str(ex)))
+
+        self.import_dialog.open = False
+        self.imported_rows = []
+        self.import_row_checkboxes.clear()
+        self.import_generate_btn.disabled = False
+
+        if failed_rows:
+            failed_summary = "; ".join(f"row {rn}: {msg}" for rn, msg in failed_rows[:3])
+            more = f" (+{len(failed_rows) - 3} more)" if len(failed_rows) > 3 else ""
+            self._set_status(f"✅ Generated {success_count}. ❌ {len(failed_rows)} failed — {failed_summary}{more}")
+        else:
+            self._set_status(f"✅ Generated {success_count} label(s) from import.")
+
+        self.page.update()
