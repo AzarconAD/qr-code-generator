@@ -68,10 +68,10 @@ def compile_label_png(qr_image_path: str, data: QRData) -> str:
 
     max_text_width = CANVAS_SIZE - (2 * TEXT_SIDE_MARGIN)
     line1_text = f"{data.department}-{data.asset_id}"
-    line2_text = data.description or ""
+    line2_text = f"{data.reference_no}-{data.description}"
 
-    line1, font1 = _fit_line(draw, line1_text, max_text_width, start_size=20, min_size=12)
-    line2, font2 = _fit_line(draw, line2_text, max_text_width, start_size=16, min_size=10)
+    line1, font1 = _fit_line(draw, line1_text, max_text_width, start_size=22, min_size=14)
+    line2, font2 = _fit_line(draw, line2_text, max_text_width, start_size=18, min_size=12)
 
     line1_y = TOP_MARGIN + QR_SIZE + 12
     line2_y = line1_y + LINE_HEIGHT

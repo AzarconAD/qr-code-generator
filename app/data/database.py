@@ -21,6 +21,7 @@ def init_db() -> None:
             CREATE TABLE IF NOT EXISTS labels (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 department TEXT NOT NULL,
+                reference_no TEXT,
                 asset_code TEXT NOT NULL,
                 asset_number TEXT NOT NULL,
                 serial_number TEXT,
@@ -35,6 +36,7 @@ def init_db() -> None:
 
 def insert_label(
     department: str,
+    reference_no: str,
     asset_code: str,
     asset_number: str,
     serial_number: str,
@@ -47,12 +49,13 @@ def insert_label(
         cursor = conn.execute(
             """
             INSERT INTO labels
-                (department, asset_code, asset_number, serial_number,
+                (department, reference_no, asset_code, asset_number, serial_number,
                  description, qr_image_path, label_path, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 department,
+                reference_no,
                 asset_code,
                 asset_number,
                 serial_number,

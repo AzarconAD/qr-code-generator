@@ -18,6 +18,13 @@ class HomeView:
             expand=True,
         )
 
+        self.reference_no = ft.TextField(
+            label="Reference No.",
+            hint_text="Reference Number",
+            prefix_icon=ft.Icons.TAG,
+            expand=True,
+        ) 
+
         self.asset_code_dropdown = ft.Dropdown(
             label="Asset Code",
             hint_text="Type",
@@ -117,10 +124,10 @@ class HomeView:
             content=ft.Column(
                 [
                     ft.Text("Asset Information", size=15, weight=ft.FontWeight.BOLD),
-                    ft.Divider(height=12),
                     self.department_dropdown,
                     ft.Row([self.asset_code_dropdown, self.asset_number_input], spacing=12),
-                    self.serial_input,
+                    ft.Row([self.reference_no, self.serial_input], spacing=12),
+                    ft.Divider(height=12),
                     self.description_input,
                 ],
                 spacing=14,
@@ -181,6 +188,7 @@ class HomeView:
         try:
             label_path, img_path, record_id = generate_and_compile(
                 department=self.department_dropdown.value,
+                reference_no=self.reference_no.value or "N/A",
                 asset_code=self.asset_code_dropdown.value,
                 asset_number=self.asset_number_input.value,
                 serial_number=self.serial_input.value or "N/A",

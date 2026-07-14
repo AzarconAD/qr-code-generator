@@ -3,8 +3,9 @@ import flet as ft
 from app.data.database import get_all_labels
 from app.controllers.qr_controller import delete_qr_code
 from app.utils.batch_pdf_compiler import compile_labels_to_pdf
+from app.models.asset_config import DEPARTMENTS
 
-SIZE_OPTIONS = ["1", "2", "3", "4", "5"]
+SIZE_OPTIONS = ["1", "1.5" "2", "3", "4", "5"]
 
 
 class HistoryView:
@@ -18,6 +19,17 @@ class HistoryView:
 
         self.select_all_checkbox = ft.Checkbox(
             label="Select All", value=False, on_change=self.on_select_all_change,
+        )
+
+        # --- Department filter dropdown --- #
+        filter_options = [ft.DropdownOption("__all__", text="All Departments")] + \
+                         [ft.DropdownOption(d) for d in DEPARTMENTS]
+        self.dept_filter_dropdown = ft.Dropdown(
+            label="Filter by Department",
+            options=filter_options,
+            value="__all__",
+            width=220,
+            on_select=self.on_dept_filter_change,
         )
 
         self.size_dropdown = ft.Dropdown(
@@ -61,6 +73,7 @@ class HistoryView:
                 self.select_all_checkbox,
                 self.selection_status,
                 ft.Container(expand=True),
+                self.dept_filter_dropdown,
                 self.size_dropdown,
                 self.compile_btn,
                 self.delete_btn,
@@ -139,6 +152,37 @@ class HistoryView:
             self.list_view.controls.append(self._build_row(r))
         self.list_container.content = self.list_view
 
+    def _apply_filter(self):
+        """Filter records by selected department and rebuild the list."""
+        if self._active_filter:
+            self.filtered_records = [r for r in self.records if r["department"] == self._active_filter]
+        else:
+            self.filtered_records = list(self.records)
+
+        self.selected_ids.clear()
+        self.checkboxes.clear()
+        self.select_all_checkbox.value = False
+        self._update_selection_status()
+
+        self.list_view.controls.clear()
+        if not self.filtered_records:
+            if self._active_filter:
+                self.empty_state.controls[1].value = f'No QR codes found for "{self._active_filter}".'
+            else:
+                self.empty_state.controls[1].value = "No QR codes generated yet."
+            self.list_container.content = self.empty_state
+            return
+
+        for r in self.filtered_records:
+            self.list_view.controls.append(self._build_row(r))
+        self.list_container.content = self.list_view
+
+    def on_dept_filter_change(self, e):
+        selected = self.dept_filter_dropdown.value
+        self._active_filter = None if selected == "__all__" else selected
+        self._apply_filter()
+        self.page.update()
+
     def _build_row(self, r: dict) -> ft.Control:
         asset_id = f"{r['asset_code']}-{r['asset_number']}"
         created = r["created_at"].replace("T", "  ") if r["created_at"] else ""
@@ -200,6 +244,7 @@ class HistoryView:
         self.preview_details.controls = [
             ft.Text(asset_id, weight=ft.FontWeight.BOLD, size=18),
             ft.Text(f"Department: {record['department']}", size=13),
+            ft.Text(f"Reference Number: {record['reference_no']}", size=13),
             ft.Text(f"Serial Number: {record['serial_number'] or 'N/A'}", size=13),
             ft.Text(f"Description: {record['description'] or 'No description'}", size=13),
             ft.Text(f"Generated: {created}", size=12, color=ft.Colors.GREY_500),

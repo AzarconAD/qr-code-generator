@@ -5,12 +5,13 @@ from app.utils.label_compiler import compile_label_png
 from app.data.database import insert_label
 from app.data.database import delete_label as _delete_label_record
 
-def generate_and_compile(department, asset_code, asset_number, serial_number, description):
-    if not department or not asset_code or not asset_number:
-        raise ValueError("Department, Asset Code, and Asset Number are required.")
+def generate_and_compile(department, reference_no, asset_code, asset_number, serial_number, description):
+    if not department or not asset_code or not asset_number or not reference_no:
+        raise ValueError("Department, Reference Number, Asset Code, and Asset Number are required.")
 
     data = QRData(
-        department=department, 
+        department=department,
+        reference_no=reference_no, 
         asset_code=asset_code, 
         asset_number=asset_number,
         serial_number=serial_number, 
@@ -22,7 +23,8 @@ def generate_and_compile(department, asset_code, asset_number, serial_number, de
 
     try:
         record_id = insert_label(
-            department=department, 
+            department=department,
+            reference_no=reference_no, 
             asset_code=asset_code, 
             asset_number=asset_number,
             serial_number=serial_number, 

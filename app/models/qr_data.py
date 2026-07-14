@@ -10,6 +10,7 @@ def _clean(value: str) -> str:
 @dataclass
 class QRData:
     department: str
+    reference_no: str
     asset_code: str
     asset_number: str
     serial_number: str
@@ -20,6 +21,7 @@ class QRData:
 
     def __post_init__(self):
         self.department = _clean(self.department)
+        self.reference_no = _clean(self.reference_no)
         self.asset_code = _clean(self.asset_code)
         self.asset_number = _clean(self.asset_number)
         self.serial_number = _clean(self.serial_number) if self.serial_number else self.serial_number
@@ -32,6 +34,7 @@ class QRData:
     def to_qr_string(self) -> str:
         return (
             f"Department: {self.department}\n"
+            f"Reference Number: {self.reference_no}\n"
             f"Asset ID: {self.asset_id}\n"
             f"Serial No: {self.serial_number}\n"
             f"Description: {self.description}"
