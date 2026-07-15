@@ -28,8 +28,8 @@ A desktop application built with **Flet** (Python) to generate QR code labels fo
 1. Clone the repository or download the source code.
 2. Create and activate a virtual environment (recommended):
    ```bash
-   python -m venv venv
-   source venv/bin/activate   # On Windows: venv\Scripts\activate
+   python -m venv .venv
+   source venv/bin/activate   # On Windows: .\venv\Scripts\Activate.ps1
    ```
 3. Install dependencies:
    ```bash
@@ -69,26 +69,27 @@ qr_generator_flet/
 ├── README.md
 ├──.gitignore
 ├── assets/
-│   ├── temp_qr/            # Temporary QR images
-│   └── icons/              # App icons
-├── outputs/                # Compiled PDFs
+│   ├── temp_qr/                                    # Temporary QR images
+│   └── icons/                                      # App icons
+├── outputs/                                        # Compiled PDFs
 └── app/
-   ├── main.py              # Entry point – Flet app with routing
+   ├── main.py                                      # Entry point – Flet app with routing
    ├── data/
    │   ├── labels.db
-   │   └── database.py      # SQLite operations (init, insert, select, delete)
+   │   └── database.py                              # SQLite operations (init, insert, select, delete)
    ├── models/
-   │   ├── qr_data.py       # Data class for QR info, sanitization
-   │   └── asset_config.py  # Department list and asset code mapping
+   │   ├── qr_data.py                               # Data class for QR info, sanitization
+   │   └── asset_config.py                          # Department list and asset code mapping
    ├── controllers/
-   │   └── qr_controller.py # Orchestrates generation, DB insertion, file cleanup
+   │   └── qr_controller.py                         # Orchestrates generation, DB insertion, file cleanup
    ├── utils/
-   │   ├── qr_generator.py  # Generates QR code image
-   │   ├── label_compiler.py # Composes QR + text into a square PNG label
-   │   └── batch_pdf_compiler.py # Compiles multiple labels into a PDF grid
+   │   ├── import_parser.py                         # Excel file imports handler
+   │   ├── qr_generator.py                          # Generates QR code image
+   │   ├── label_compiler.py                        # Composes QR + text into a square PNG label
+   │   └── batch_pdf_compiler.py                    # Compiles multiple labels into a PDF grid
    └── views/
-      ├── home.py          # Main input form and generation UI
-      └── history.py       # List view of all labels with selection actions
+      ├── home.py                                   # Main input form and generation UI
+      └── history.py                                # List view of all labels with selection actions
 ```
 
 ---

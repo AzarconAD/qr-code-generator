@@ -81,8 +81,10 @@ def compile_label_png(qr_image_path: str, data: QRData) -> str:
         x = (CANVAS_SIZE - text_width) // 2
         draw.text((x, y), text, fill=TEXT_COLOR, font=font)
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_path = str(OUTPUT_DIR / f"asset_label_{timestamp}.png")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    safe_asset_id = str(data.asset_id).replace("/", "_").replace("\\", "_")
+    output_path = str(OUTPUT_DIR / f"{safe_asset_id}_{timestamp}.png")
+    
     canvas.save(output_path, format="PNG")
 
     return output_path
