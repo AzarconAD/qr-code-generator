@@ -164,6 +164,37 @@ class HomeView:
         )
         self.page.overlay.append(self.import_dialog)
 
+        # --- Edit imported row dialog --- #
+        self._editing_row_index: int | None = None
+
+        self.edit_department = ft.TextField(label="Department")
+        self.edit_asset_code = ft.TextField(label="Asset Code", width=170)
+        self.edit_asset_number = ft.TextField(label="Asset Number", expand=True)
+        self.edit_reference_no = ft.TextField(label="Reference No.")
+        self.edit_serial_number = ft.TextField(label="Serial Number")
+        self.edit_description = ft.TextField(label="Description", multiline=True, min_lines=1, max_lines=3)
+
+        self.edit_row_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Edit Row"),
+            content=ft.Column(
+                [
+                    self.edit_department,
+                    ft.Row([self.edit_asset_code, self.edit_asset_number], spacing=12),
+                    self.edit_reference_no,
+                    self.edit_serial_number,
+                    self.edit_description,
+                ],
+                tight=True, spacing=12, width=380,
+            ),
+            actions=[
+                ft.TextButton("Cancel", on_click=self._on_edit_row_cancel),
+                ft.ElevatedButton("Save", on_click=self._on_edit_row_save),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        self.page.overlay.append(self.edit_row_dialog)
+
         # --- Layout: form card (left) + actions/preview card (right) --- #
         form_card = ft.Container(
             content=ft.Column(
@@ -335,6 +366,13 @@ class HomeView:
                     size=11, color=ft.Colors.RED_400,
                 )
 
+            edit_btn = ft.IconButton(
+                icon=ft.Icons.EDIT_OUTLINED,
+                icon_size=18,
+                tooltip="Edit this row",
+                on_click=lambda e, i=idx: self._open_edit_row(i),
+            )
+
             row_controls = [
                 ft.Row(
                     [
@@ -346,6 +384,7 @@ class HomeView:
                             ],
                             spacing=0, expand=True,
                         ),
+                        edit_btn,
                     ],
                     spacing=8,
                 ),
@@ -373,6 +412,47 @@ class HomeView:
 
     def _on_import_cancel(self, e):
         self.import_dialog.open = False
+        self.page.update()
+
+    def _open_edit_row(self, idx: int):
+        row = self.imported_rows[idx]
+        self._editing_row_index = idx
+
+        self.edit_department.value = row["department"]
+        self.edit_asset_code.value = row["asset_code"]
+        self.edit_asset_number.value = row["asset_number"]
+        self.edit_reference_no.value = row["reference_no"]
+        self.edit_serial_number.value = row["serial_number"]
+        self.edit_description.value = row["description"]
+
+        self.edit_row_dialog.open = True
+        self.page.update()
+
+    def _on_edit_row_cancel(self, e):
+        self._editing_row_index = None
+        self.edit_row_dialog.open = False
+        self.page.update()
+
+    def _on_edit_row_save(self, e):
+        idx = self._editing_row_index
+        if idx is None:
+            return
+
+        row = self.imported_rows[idx]
+        row["department"] = (self.edit_department.value or "").strip()
+        row["asset_code"] = (self.edit_asset_code.value or "").strip()
+        row["asset_number"] = (self.edit_asset_number.value or "").strip()
+        row["reference_no"] = (self.edit_reference_no.value or "").strip()
+        row["serial_number"] = (self.edit_serial_number.value or "").strip()
+        row["description"] = (self.edit_description.value or "").strip()
+
+        row["missing_fields"] = [
+            f for f in ("department", "asset_code", "asset_number") if not row[f]
+        ]
+
+        self._editing_row_index = None
+        self.edit_row_dialog.open = False
+        self._build_import_preview()
         self.page.update()
 
     async def on_import_generate_click(self, e):

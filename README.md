@@ -29,7 +29,7 @@ A desktop application built with **Flet** (Python) to generate QR code labels fo
 2. Create and activate a virtual environment (recommended):
    ```bash
    python -m venv .venv
-   source venv/bin/activate   # On Windows: .\venv\Scripts\Activate.ps1
+   source venv/bin/activate   # On Windows: .\.venv\Scripts\Activate.ps1
    ```
 3. Install dependencies:
    ```bash
