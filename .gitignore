@@ -224,3 +224,4 @@ outputs/
 *.pdf
 app/data/
 *.db
+app/data/labels.db

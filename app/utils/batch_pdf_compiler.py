@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from datetime import datetime
-from PIL import Image
+from PIL import Image, ImageDraw
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 OUTPUT_DIR = PROJECT_ROOT / "outputs"
@@ -29,15 +29,28 @@ def _render_page(label_paths: list[str], label_px: int, columns: int) -> Image.I
     page = Image.new("RGB", (PAGE_WIDTH_PX, PAGE_HEIGHT_PX), "white")
     page.info["dpi"] = (DPI, DPI)
 
+    actual_columns = min(len(label_paths), columns)
+    actual_rows = (len(label_paths) + columns - 1) // columns
+    
+    group_width = actual_columns * label_px + max(0, actual_columns - 1) * GAP_PX
+    group_height = actual_rows * label_px + max(0, actual_rows - 1) * GAP_PX
+    
+    start_x = (PAGE_WIDTH_PX - group_width) // 2
+    start_y = MARGIN_PX
+
+    draw = ImageDraw.Draw(page)
+
     for index, path in enumerate(label_paths):
         col = index % columns
         row = index // columns
-        x = MARGIN_PX + col * (label_px + GAP_PX)
-        y = MARGIN_PX + row * (label_px + GAP_PX)
+        x = start_x + col * (label_px + GAP_PX)
+        y = start_y + row * (label_px + GAP_PX)
 
         with Image.open(path) as label_img:
             label_img = label_img.convert("RGB").resize((label_px, label_px))
             page.paste(label_img, (x, y))
+            
+            draw.rectangle([x, y, x + label_px - 1, y + label_px - 1], outline="black", width=2)
 
     return page
 
