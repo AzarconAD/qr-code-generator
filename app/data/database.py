@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import contextlib
 from datetime import datetime
 
 DB_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,8 +16,9 @@ def _get_connection() -> sqlite3.Connection:
 
 def init_db() -> None:
     """Create the labels table if it doesn't exist yet. Call once at app startup."""
-    with _get_connection() as conn:
-        conn.execute(
+    with contextlib.closing(_get_connection()) as conn:
+        with conn:
+            conn.execute(
             """
             CREATE TABLE IF NOT EXISTS labels (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,8 +47,9 @@ def insert_label(
     label_path: str,
 ) -> int:
     """Insert a new label record and return its id."""
-    with _get_connection() as conn:
-        cursor = conn.execute(
+    with contextlib.closing(_get_connection()) as conn:
+        with conn:
+            cursor = conn.execute(
             """
             INSERT INTO labels
                 (department, reference_no, asset_code, asset_number, serial_number,
@@ -70,21 +73,22 @@ def insert_label(
 
 def get_all_labels() -> list[dict]:
     """Return all label records, most recently generated first."""
-    with _get_connection() as conn:
+    with contextlib.closing(_get_connection()) as conn:
         rows = conn.execute("SELECT * FROM labels ORDER BY id DESC").fetchall()
         return [dict(row) for row in rows]
 
 
 def get_label(label_id: int) -> dict | None:
-    with _get_connection() as conn:
+    with contextlib.closing(_get_connection()) as conn:
         row = conn.execute("SELECT * FROM labels WHERE id = ?", (label_id,)).fetchone()
         return dict(row) if row else None
     
 def delete_label(label_id: int) -> dict | None:
     """Delete a label record and return its row (for file cleanup), or None if not found."""
-    with _get_connection() as conn:
-        row = conn.execute("SELECT * FROM labels WHERE id = ?", (label_id,)).fetchone()
-        if row is None:
-            return None
-        conn.execute("DELETE FROM labels WHERE id = ?", (label_id,))
-        return dict(row)
+    with contextlib.closing(_get_connection()) as conn:
+        with conn:
+            row = conn.execute("SELECT * FROM labels WHERE id = ?", (label_id,)).fetchone()
+            if row is None:
+                return None
+            conn.execute("DELETE FROM labels WHERE id = ?", (label_id,))
+            return dict(row)

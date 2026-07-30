@@ -67,13 +67,12 @@ def _find_header_row(lines: list[str]) -> int:
 def parse_import_file(file_path: str) -> list[dict]:
     ext = os.path.splitext(file_path)[1].lower()
 
-    # Read raw lines to find header
-    with open(file_path, "r", encoding="utf-8-sig") as f:
-        lines = f.readlines()
-
-    header_row_index = _find_header_row(lines)
-
     if ext == ".csv":
+        # Read raw lines to find header
+        with open(file_path, "r", encoding="utf-8-sig") as f:
+            lines = f.readlines()
+        header_row_index = _find_header_row(lines)
+
         df = pd.read_csv(
             file_path,
             skiprows=header_row_index,
@@ -108,9 +107,12 @@ def parse_import_file(file_path: str) -> list[dict]:
             if canonical == "asset_code_original":
                 asset_code_col = col
 
-    if asset_code_col and "asset_number" not in column_map.values():
-        # Map that column to asset_number instead
-        column_map[asset_code_col] = "asset_number"
+    if asset_code_col:
+        if "asset_number" not in column_map.values():
+            # Map that column to asset_number instead
+            column_map[asset_code_col] = "asset_number"
+        elif "asset_code" not in column_map.values():
+            column_map[asset_code_col] = "asset_code"
 
     # If there is still no asset_number column, we cannot proceed.
     if "asset_number" not in column_map.values():

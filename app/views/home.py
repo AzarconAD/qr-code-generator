@@ -264,6 +264,9 @@ class HomeView:
         if not self.department_dropdown.value:
             self._set_status("⚠️ Please select a Department.")
             return
+        if not self.asset_code_dropdown.value:
+            self._set_status("⚠️ Please select an Asset Code.")
+            return
         if not self.asset_number_input.value:
             self._set_status("⚠️ Please enter an Asset Number.")
             return
@@ -343,14 +346,30 @@ class HomeView:
         self.import_dialog.open = True
         self.page.update()
 
-    def _build_import_preview(self):
+    def _build_import_preview(self, preserve_state: bool = False):
+        if preserve_state:
+            old_states = {idx: cb.value for idx, cb in self.import_row_checkboxes.items()}
+            old_disabled = {idx: cb.disabled for idx, cb in self.import_row_checkboxes.items()}
+        else:
+            old_states = {}
+            old_disabled = {}
+            self.import_select_all.value = True
+
         self.import_row_checkboxes.clear()
         self.import_list_view.controls.clear()
-        self.import_select_all.value = True
 
         for idx, row in enumerate(self.imported_rows):
             is_valid = not row["missing_fields"]
-            checkbox = ft.Checkbox(value=is_valid, disabled=not is_valid)
+            
+            if preserve_state and idx in old_states:
+                if old_disabled[idx] and is_valid:
+                    check_value = True
+                else:
+                    check_value = old_states[idx] if is_valid else False
+            else:
+                check_value = is_valid
+
+            checkbox = ft.Checkbox(value=check_value, disabled=not is_valid)
             self.import_row_checkboxes[idx] = checkbox
 
             summary = f"{row['department'] or '—'} / {row['asset_code'] or '—'}-{row['asset_number'] or '—'}"
@@ -452,7 +471,7 @@ class HomeView:
 
         self._editing_row_index = None
         self.edit_row_dialog.open = False
-        self._build_import_preview()
+        self._build_import_preview(preserve_state=True)
         self.page.update()
 
     async def on_import_generate_click(self, e):
