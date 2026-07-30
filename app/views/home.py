@@ -1,4 +1,5 @@
 import os
+import asyncio
 import flet as ft
 from app.controllers.qr_controller import generate_and_compile
 from app.models.asset_config import DEPARTMENTS, ASSET_CODE_MAPPING
@@ -141,6 +142,11 @@ class HomeView:
             icon=ft.Icons.QR_CODE,
             on_click=self.on_import_generate_click,
         )
+        self.import_generate_loading = ft.Row(
+            [ft.ProgressRing(width=16, height=16, stroke_width=2), ft.Text("Importing...", size=13, color=ft.Colors.GREY_600)],
+            visible=False,
+            alignment=ft.MainAxisAlignment.CENTER,
+        )
 
         self.import_dialog = ft.AlertDialog(
             modal=True,
@@ -158,6 +164,7 @@ class HomeView:
             ),
             actions=[
                 ft.TextButton("Cancel", on_click=self._on_import_cancel),
+                self.import_generate_loading,
                 self.import_generate_btn,
             ],
             actions_alignment=ft.MainAxisAlignment.END,
@@ -485,7 +492,13 @@ class HomeView:
             self.page.update()
             return
 
-        self.import_generate_btn.disabled = True
+        self.import_generate_btn.visible = False
+        self.import_generate_loading.visible = True
+        self.page.update()
+        
+        # Yield to allow UI to render the loading indicator before blocking CPU
+        await asyncio.sleep(0.1)
+
         total = len(selected_indices)
         success_count = 0
         failed_rows = []
@@ -495,6 +508,7 @@ class HomeView:
 
             self.import_status.value = f"⏳ Generating {position} of {total}... ({success_count} succeeded, {len(failed_rows)} failed)"
             self.page.update()
+            await asyncio.sleep(0.01)  # Yield to update progress text
 
             try:
                 generate_and_compile(
@@ -512,7 +526,8 @@ class HomeView:
         self.import_dialog.open = False
         self.imported_rows = []
         self.import_row_checkboxes.clear()
-        self.import_generate_btn.disabled = False
+        self.import_generate_btn.visible = True
+        self.import_generate_loading.visible = False
 
         if failed_rows:
             failed_summary = "; ".join(f"row {rn}: {msg}" for rn, msg in failed_rows[:3])
