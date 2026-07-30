@@ -5,7 +5,7 @@ from app.controllers.qr_controller import delete_qr_code
 from app.utils.batch_pdf_compiler import compile_labels_to_pdf
 from app.models.asset_config import DEPARTMENTS
 
-SIZE_OPTIONS = ["1", "1.5", "2", "3", "4", "5"]
+SIZE_OPTIONS = ["1", "2", "3", "4", "5"]
 
 
 class HistoryView:
@@ -34,11 +34,20 @@ class HistoryView:
             on_select=self.on_dept_filter_change,
         )
 
-        self.size_dropdown = ft.Dropdown(
+        self.size_dropdown = ft.TextField(
             label="Size (in)",
-            options=[ft.DropdownOption(s, text=f"{s}x{s}") for s in SIZE_OPTIONS],
             value="2",
             width=110,
+            suffix=ft.PopupMenuButton(
+                icon=ft.Icons.ARROW_DROP_DOWN,
+                items=[
+                    ft.PopupMenuItem(
+                        content=ft.Text(f"{s}x{s}"),
+                        data=s,
+                        on_click=self.on_size_preset_select,
+                    ) for s in SIZE_OPTIONS
+                ]
+            )
         )
 
         self.compile_btn = ft.ElevatedButton(
@@ -174,6 +183,10 @@ class HistoryView:
         selected = self.dept_filter_dropdown.value
         self._active_filter = None if selected == "__all__" else selected
         self._apply_filter()
+
+    def on_size_preset_select(self, e):
+        self.size_dropdown.value = str(e.control.data)
+        self.page.update()
 
     def _build_row(self, r: dict) -> ft.Control:
         asset_id = f"{r['asset_code']}-{r['asset_number']}"
@@ -322,7 +335,15 @@ class HistoryView:
         # Use filtered_records to ensure we only select visible records
         selected_records = [r for r in self.filtered_records if r["id"] in self.selected_ids]
         label_paths = [r.get("label_path") or r["qr_image_path"] for r in selected_records]
-        label_size_in = float(self.size_dropdown.value or "2")
+        raw_size = str(self.size_dropdown.value or "2").lower()
+        try:
+            if 'x' in raw_size:
+                raw_size = raw_size.split('x')[0].strip()
+            label_size_in = float(raw_size)
+        except ValueError:
+            self.status_text.value = f"❌ Invalid size value: {self.size_dropdown.value}"
+            self.page.update()
+            return
 
         try:
             pdf_path = compile_labels_to_pdf(label_paths, label_size_in=label_size_in)
